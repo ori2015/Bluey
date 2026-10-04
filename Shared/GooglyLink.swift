@@ -31,6 +31,14 @@ public struct FaceState: Codable, Equatable, Sendable {
 }
 
 public struct Packet: Codable, Sendable {
+    public var protocolVersion: Int?
+    public var deviceID: String?
+    public var hostID: String?
+    public var secret: String?
+    public var proof: String?
+    public var nonce: String?
+    public var code: String?
+    public var errorCode: String?
     public var face: FaceState?
     /// Sent once by each side after connecting, with a device name.
     public var hello: String?
@@ -53,7 +61,17 @@ public struct Packet: Codable, Sendable {
 
     public init(face: FaceState? = nil, hello: String? = nil, volume: Double? = nil, command: String? = nil,
                 audio: String? = nil, speech: Int? = nil, callID: String? = nil, tool: String? = nil,
-                text: String? = nil, image: String? = nil) {
+                text: String? = nil, image: String? = nil, protocolVersion: Int? = nil,
+                deviceID: String? = nil, hostID: String? = nil, secret: String? = nil,
+                proof: String? = nil, nonce: String? = nil, code: String? = nil, errorCode: String? = nil) {
+        self.protocolVersion = protocolVersion
+        self.deviceID = deviceID
+        self.hostID = hostID
+        self.secret = secret
+        self.proof = proof
+        self.nonce = nonce
+        self.code = code
+        self.errorCode = errorCode
         self.face = face
         self.hello = hello
         self.volume = volume
@@ -115,6 +133,10 @@ public final class LineConnection {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 1024 * 1024) { [weak self] data, _, isComplete, error in
             guard let self else { return }
             if let data, !data.isEmpty {
+                guard self.buffer.count + data.count <= 8 * 1024 * 1024 else {
+                    self.connection.cancel()
+                    return
+                }
                 self.buffer.append(data)
                 while let newline = self.buffer.firstIndex(of: 0x0A) {
                     let line = self.buffer[self.buffer.startIndex..<newline]

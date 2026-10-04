@@ -18,7 +18,7 @@
 		772A196648CCCC476A2E36F7 /* OFL-Fredoka.txt in Resources */ = {isa = PBXBuildFile; fileRef = 020C853B32D37028CE040148 /* OFL-Fredoka.txt */; };
 		9C57F9AFA362287C2B93142E /* IBMPlexMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0EAD8A3C72D3899AD5CD2AA8 /* IBMPlexMono-Regular.ttf */; };
 		A3D88EE98BFEE3386A2C66DF /* BlueyAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1510156B478E99D7C4446DCA /* BlueyAppView.swift */; };
-		C2D2BC58460F12FB0D562BB7 /* LiveVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD953582717D49F21FCD734 /* LiveVoice.swift */; };
+		C2D2BC58460F12FB0D562BB7 /* PushToTalkController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CD953582717D49F21FCD734 /* PushToTalkController.swift */; };
 		C763037B3F88C28F89EB61F0 /* MacLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = B44C98F6A89143BA9C926480 /* MacLink.swift */; };
 		CD8A48CB04D56A4BEF47D6AB /* GooglyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C95CBBB828E99EC09708E98E /* GooglyApp.swift */; };
 		EADE24E60818A63E82366B42 /* FaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3AAA80221D679C8EAAE925 /* FaceView.swift */; };
@@ -32,7 +32,7 @@
 		1249C703A2D40793CA70D00E /* OFL-IBMPlex.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "OFL-IBMPlex.txt"; sourceTree = "<group>"; };
 		1510156B478E99D7C4446DCA /* BlueyAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlueyAppView.swift; sourceTree = "<group>"; };
 		1C8AB3F441CA03CDA07FAE72 /* IBMPlexMono-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexMono-Medium.ttf"; sourceTree = "<group>"; };
-		2CD953582717D49F21FCD734 /* LiveVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoice.swift; sourceTree = "<group>"; };
+		2CD953582717D49F21FCD734 /* PushToTalkController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushToTalkController.swift; sourceTree = "<group>"; };
 		35F3C44C342D6E869E6E3B4E /* BlobShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlobShape.swift; sourceTree = "<group>"; };
 		4A31DC33ABF7869BDE4E0F6C /* Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Palette.swift; sourceTree = "<group>"; };
 		4F71F206238433A6F710528B /* GooglyLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GooglyLink.swift; sourceTree = "<group>"; };
@@ -85,7 +85,7 @@
 				1510156B478E99D7C4446DCA /* BlueyAppView.swift */,
 				AA3AAA80221D679C8EAAE925 /* FaceView.swift */,
 				C95CBBB828E99EC09708E98E /* GooglyApp.swift */,
-				2CD953582717D49F21FCD734 /* LiveVoice.swift */,
+				2CD953582717D49F21FCD734 /* PushToTalkController.swift */,
 				B44C98F6A89143BA9C926480 /* MacLink.swift */,
 				7A762C0174AFF849BAD1A700 /* PairingView.swift */,
 				83073BF3A1F734ADC97138DF /* SessionStore.swift */,
@@ -186,7 +186,7 @@
 				EADE24E60818A63E82366B42 /* FaceView.swift in Sources */,
 				CD8A48CB04D56A4BEF47D6AB /* GooglyApp.swift in Sources */,
 				6E03A7EBF9AAFFE4AC87ADE4 /* GooglyLink.swift in Sources */,
-				C2D2BC58460F12FB0D562BB7 /* LiveVoice.swift in Sources */,
+				C2D2BC58460F12FB0D562BB7 /* PushToTalkController.swift in Sources */,
 				C763037B3F88C28F89EB61F0 /* MacLink.swift in Sources */,
 				68F797C6A1D3EC7A83674C2A /* PairingView.swift in Sources */,
 				6F0C91F5B7E911464464DB96 /* Palette.swift in Sources */,
@@ -327,7 +327,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = NF73NSV867;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -347,7 +347,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = NF73NSV867;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

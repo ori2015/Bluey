@@ -70,7 +70,7 @@ struct SoundButton: View {
             .disabled(!link.connected)
             .opacity(link.connected ? 1 : 0.4)
             if link.macs.count > 1 {
-                Text("Mac")
+                Text("Desktop")
                     .font(.plexMono(12))
                     .textCase(.uppercase)
                     .foregroundStyle(Color(hex: Palette.inkSoft))
@@ -94,7 +94,7 @@ struct SoundButton: View {
                 }
             }
             if !link.connected {
-                Text("Connect to your Mac to talk to him.")
+                Text("Connect to your desktop to talk to him.")
                     .font(.plexSans(12))
                     .foregroundStyle(Color(hex: Palette.inkSoft))
             }

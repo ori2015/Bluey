@@ -31,6 +31,17 @@ struct RootView: View {
                 .simultaneousGesture(holdToAsk)
 
             ModeIndicator(state: live.state)
+            if !live.caption.isEmpty {
+                Text(live.caption)
+                    .font(.fredoka(18))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color(hex: Palette.ink))
+                    .padding(12)
+                    .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                    .padding(.horizontal, 100).padding(.bottom, 12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .allowsHitTesting(false)
+            }
 
             SoundButton(link: link, live: live)
 
@@ -49,7 +60,7 @@ struct RootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 
             if showPairing && !link.connected {
-                PairingView { withAnimation(.easeOut(duration: 0.3)) { showPairing = false } }
+                PairingView(link: link) { withAnimation(.easeOut(duration: 0.3)) { showPairing = false } }
                     .transition(.opacity)
             }
         }
@@ -66,10 +77,10 @@ struct RootView: View {
             link.start()
         }
         .onChange(of: link.connected) { _, connected in
-            if connected { withAnimation(.easeOut(duration: 0.4)) { showPairing = false } }
+            withAnimation(.easeOut(duration: 0.4)) { showPairing = !connected }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { link.start() } else if phase == .background { link.stop() }
+            if phase == .active { link.start() } else if phase == .background { live.sleep(); link.stop() }
         }
     }
 
@@ -103,23 +114,15 @@ struct RootView: View {
 
     /// Connects the live voice to the Mac: keys, tools, captions and wake/sleep.
     private func wireLiveVoice() {
-        live.requestToken = { [link] done in
-            link.request(Packet(command: "realtimeToken")) { reply in done(reply?.text) }
-        }
-        live.runTool = { [link] name, arguments, done in
-            link.request(Packet(command: "tool", tool: name, text: arguments)) { reply in
-                done(reply?.text ?? "The Mac didn't answer.", reply?.image)
-            }
-        }
+        live.sendPacket = { [link] packet in link.send(packet) }
+        link.onEvent = { [live] packet in live.receive(packet) }
+        link.onDisconnect = { [live] in live.disconnected() }
         live.onSessionStart = { [store] in store.start() }
         live.onSessionEnd = { [store] in store.end() }
         live.onUserTurn = { [store] item, asked in store.placeholder(itemID: item, asked: asked) }
         live.onUserWords = { [store] item, text, asked in store.heard(itemID: item, text: text, asked: asked) }
         live.onReply = { [store] text in store.reply(text) }
         live.onReport = { [store] text in store.report(text) }
-        live.onCaption = { [link] text, finished in
-            link.send(Packet(command: finished ? "captionDone" : "caption", text: text))
-        }
         live.onStateChange = { [link, animator] state in
             switch state {
             case .asleep:

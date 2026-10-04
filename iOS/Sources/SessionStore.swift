@@ -54,12 +54,18 @@ final class SessionStore: ObservableObject {
     @Published private(set) var sessions: [BlueySession] = []  // newest first
     @Published private(set) var currentID: UUID?
 
+    @Published var historyEnabled = UserDefaults.standard.object(forKey: "historyEnabled") as? Bool ?? true {
+        didSet {
+            UserDefaults.standard.set(historyEnabled, forKey: "historyEnabled")
+            if !historyEnabled { try? FileManager.default.removeItem(at: fileURL) }
+        }
+    }
     private let fileURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("sessions.json")
     private var saveWork: DispatchWorkItem?
 
     init() {
-        if let data = try? Data(contentsOf: fileURL),
+        if historyEnabled, let data = try? Data(contentsOf: fileURL),
            let saved = try? JSONDecoder().decode([BlueySession].self, from: data) {
             // A session left open by a crash or force-quit is closed at its last line.
             sessions = saved.map { session in
@@ -145,7 +151,7 @@ final class SessionStore: ObservableObject {
 
     private func save() {
         saveWork?.cancel()
-        guard let data = try? JSONEncoder().encode(sessions) else { return }
-        try? data.write(to: fileURL, options: .atomic)
+        guard historyEnabled, let data = try? JSONEncoder().encode(sessions) else { return }
+        try? data.write(to: fileURL, options: [.atomic, .completeFileProtection])
     }
 }

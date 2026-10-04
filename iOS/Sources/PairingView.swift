@@ -2,6 +2,9 @@ import SwiftUI
 
 /// Shown until the phone finds the Mac: a sleepy blob and how to wake him up.
 struct PairingView: View {
+    @ObservedObject var link: MacLink
+    @State private var code = ""
+    @State private var verified = false
     var onPlay: () -> Void
 
     var body: some View {
@@ -9,23 +12,43 @@ struct PairingView: View {
             SleepyBlob()
                 .frame(width: 220, height: 190)
 
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Wake me up from your Mac")
+            ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Wake me up from Windows")
                     .font(.fredoka(32))
                     .foregroundStyle(Color(hex: 0xF4F1FA))
-                Text("Open Googly Eyes in your Mac's menu bar. Keep both on the same Wi-Fi and I'll find it.")
+                Text("Open Googly Eyes on Windows. Keep both on the same Wi-Fi and I'll find your desktop.")
                     .font(.plexSans(16))
                     .foregroundStyle(Color(hex: Palette.inkSoft))
                     .frame(maxWidth: 380, alignment: .leading)
+                if link.macs.count > 1 {
+                    Picker("Desktop", selection: Binding(get: { link.currentMac ?? "" }, set: { link.choose($0) })) {
+                        ForEach(link.macs, id: \.self) { name in Text(name).tag(name) }
+                    }.foregroundStyle(.white)
+                }
+                if link.needsPairing {
+                    Text("On Windows, open iPhone pairing. Compare this fingerprint with the one shown there.")
+                        .font(.plexSans(12)).foregroundStyle(.white)
+                    Text(link.fingerprint).font(.plexMono(10)).foregroundStyle(Color(hex: Palette.inkSoft))
+                        .textSelection(.enabled).lineLimit(3)
+                    Toggle("The fingerprints match", isOn: $verified).font(.plexSans(12)).foregroundStyle(.white)
+                    HStack {
+                        TextField("6-digit pairing code", text: $code).keyboardType(.numberPad)
+                            .textFieldStyle(.roundedBorder).frame(width: 190)
+                        Button("Pair") { link.pair(code: code) }
+                            .disabled(!verified || code.count != 6)
+                    }
+                }
+                if let error = link.pairingError { Text(error).font(.plexSans(12)).foregroundStyle(.pink) }
                 HStack(spacing: 10) {
                     ProgressView().tint(Color(hex: Palette.berry1))
-                    Text("Looking for your Mac")
+                    Text("Looking for your desktop")
                         .font(.plexMono(13))
                         .foregroundStyle(Color(hex: Palette.inkSoft))
                 }
                 .padding(.top, 4)
                 Button(action: onPlay) {
-                    Text("Play without the Mac")
+                    Text("Play without the desktop")
                         .font(.plexSans(15).weight(.semibold))
                         .foregroundStyle(Color(hex: 0xF4F1FA))
                         .padding(.horizontal, 18)
@@ -34,8 +57,11 @@ struct PairingView: View {
                 }
                 .buttonStyle(.plain)
             }
+            }
+            .frame(maxWidth: 420)
         }
-        .padding(.horizontal, 72)
+        .onChange(of: link.fingerprint) { _, _ in verified = false; code = "" }
+        .padding(.horizontal, 48)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
     }

@@ -44,7 +44,7 @@ struct BlueyAppView: View {
                             Circle()
                                 .fill(link.connected ? Color(hex: 0x5BE49B) : Color(hex: Palette.inkSoft).opacity(0.5))
                                 .frame(width: 7, height: 7)
-                            Text(link.connected ? (link.macName ?? link.currentMac ?? "Mac") : "Looking for your Mac")
+                            Text(link.connected ? (link.macName ?? link.currentMac ?? "Desktop") : "Looking for your desktop")
                                 .font(.plexSans(12))
                                 .foregroundStyle(Color(hex: Palette.inkSoft))
                                 .lineLimit(1)
@@ -77,8 +77,8 @@ struct BlueyAppView: View {
                 .opacity(!link.connected && live.state == .asleep ? 0.5 : 1)
 
                 Text(live.state == .asleep
-                     ? "He listens the whole session. Hold his face to ask something, let go and he answers."
-                     : "Session running. Hold his face to ask; everything you say is saved here.")
+                     ? "Hold his face to record a question. Release and he answers."
+                     : "Hold his face to ask. Only speech during a hold is recorded.")
                     .font(.plexSans(12))
                     .foregroundStyle(Color(hex: Palette.inkSoft))
 
@@ -91,7 +91,7 @@ struct BlueyAppView: View {
 
                 if link.macs.count > 1 {
                     VStack(alignment: .leading, spacing: 4) {
-                        label("Mac")
+                        label("Desktop")
                         ForEach(link.macs, id: \.self) { name in
                             Button { link.choose(name) } label: {
                                 HStack {
@@ -110,6 +110,10 @@ struct BlueyAppView: View {
                     }
                 }
 
+                Toggle("Save conversation history", isOn: Binding(get: { store.historyEnabled }, set: { store.historyEnabled = $0 }))
+                    .font(.plexSans(13)).foregroundStyle(.white)
+                Button("Forget this desktop") { link.forgetDesktop(); onClose() }
+                    .font(.plexSans(13)).foregroundStyle(.pink)
                 Button(action: onClose) {
                     HStack(spacing: 8) {
                         Image(systemName: "face.smiling")
