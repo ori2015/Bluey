@@ -48,7 +48,10 @@ one shared async gate serialize sign-in, sign-out and refresh. Refresh updates
 access token, expiry, scopes and rotating refresh token as one protected record.
 An uncertain refresh transport is not blindly replayed.
 
-The network server is TLS 1.2/1.3 with a persisted certificate. Initial pairing
+The network server is TLS 1.2/1.3 with a persisted certificate. Windows Schannel
+requires a key in the current user OS-protected key store; the certificate import
+uses UserKeySet without PersistKeySet and disposes it at shutdown. Only the
+DPAPI-encrypted PFX is durable. Linux tests use EphemeralKeySet. Initial pairing
 requires human certificate fingerprint comparison plus a temporary code. A paired
 phone authenticates a host/device/nonce-bound HMAC. No voice/tool request executes
 before authentication. Framing caps packets at 8 MiB; active TCP clients are
@@ -123,3 +126,8 @@ them afterward; stale app-specific temporary directories are cleaned on launch.
 Logs accept categorical events/numeric development timings, redact token patterns,
 and omit request/response bodies. Tokens are never passed to UI bridge/phone,
 logs or command-line processes. Startup uses an opt-in HKCU Run value and no admin.
+
+The live subscription stream can leave `response.completed.response.output` empty.
+The client retains `response.output_item.done` items by output index, including
+function calls and encrypted reasoning, and releases them to the agent only
+after `response.completed`. This was verified with real plan inference.

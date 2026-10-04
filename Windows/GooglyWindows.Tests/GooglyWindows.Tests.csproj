@@ -3,6 +3,7 @@
 <Compile Include="../GooglyWindows/Networking/PhoneServer.cs" Link="Host/Networking/PhoneServer.cs"/>
 <Compile Include="../GooglyWindows/Networking/PairingRegistry.cs" Link="Host/Networking/PairingRegistry.cs"/>
 <Compile Include="../GooglyWindows/Networking/HostCertificate.cs" Link="Host/Networking/HostCertificate.cs"/>
+<Compile Include="../GooglyWindows/Networking/MdnsAdvertiser.cs" Link="Host/Networking/MdnsAdvertiser.cs"/>
 <Compile Include="../GooglyWindows/Logging/SafeLog.cs" Link="Host/Logging/SafeLog.cs"/>
 <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0"/>
 <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0"/>

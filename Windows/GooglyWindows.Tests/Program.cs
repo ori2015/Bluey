@@ -127,6 +127,21 @@ AsyncTest("SSE text remains provisional until response.completed", async () =>
     var result = await ResponsesClient.ReadCompletedAsync(new FragmentedStream(Encoding.UTF8.GetBytes(sse), 3), d => { text += d; return Task.CompletedTask; }, default);
     Assert(text == "שלום" && result.Text == text);
 });
+AsyncTest("SSE preserves finished tool and reasoning items with an empty completion envelope", async () =>
+{
+    var reasoning = new JsonObject { ["type"] = "reasoning", ["id"] = "r1", ["summary"] = new JsonArray(), ["encrypted_content"] = "fixture-encrypted" };
+    var call = new JsonObject { ["type"] = "function_call", ["id"] = "f1", ["call_id"] = "call-1", ["name"] = "probe", ["namespace"] = "capability", ["arguments"] = "{}", ["status"] = "completed" };
+    var events = string.Join("", new[] {
+        new JsonObject { ["type"] = "response.output_item.done", ["output_index"] = 1, ["item"] = call },
+        new JsonObject { ["type"] = "response.output_item.done", ["output_index"] = 0, ["item"] = reasoning }
+    }.Select(e => "data: " + e.ToJsonString() + "\n\n"));
+    using var incomplete = new MemoryStream(Encoding.UTF8.GetBytes(events));
+    await Fails<SubscriptionException>(() => ResponsesClient.ReadCompletedAsync(incomplete, _ => Task.CompletedTask, default));
+    using var completed = new MemoryStream(Encoding.UTF8.GetBytes(events + "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[]}}\n\n"));
+    var result = await ResponsesClient.ReadCompletedAsync(completed, _ => Task.CompletedTask, default);
+    Assert(result.Output.Count == 2 && result.Output[0]?["encrypted_content"]?.ToString() == "fixture-encrypted");
+    Assert(result.Output[1]?["call_id"]?.ToString() == "call-1" && result.Output[1]?["namespace"]?.ToString() == "capability");
+});
 AsyncTest("SSE failed, incomplete and disconnect never count as success", async () =>
 {
     foreach (var ending in new[] { "", "data: {\"type\":\"response.incomplete\"}\n\n", "data: {\"type\":\"response.failed\",\"response\":{\"error\":{\"code\":\"subscription_sharing_usage_limit_exceeded\"}}}\n\n" })
@@ -271,6 +286,14 @@ AsyncTest("Production TLS server rejects unpaired voice and reconnects with HMAC
         await wire.SendAsync(new Packet { Command = "ping", CallID = "after" }, timeout.Token); Assert(await iterator.MoveNextAsync());
     }
     Assert(handled == 2 && registry.Devices.Count == 1);
+});
+AsyncTest("Native Windows mDNS binds IPv4 discovery interfaces", async () =>
+{
+    if (!OperatingSystem.IsWindows()) return;
+    Assert(System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces().Any(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up && n.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback), "Windows has no active network interface");
+    await using var advertiser = new GooglyWindows.Networking.MdnsAdvertiser(12345, "urn:uuid:edfe4340-9f2b-4779-aa5c-30908699dc16");
+    advertiser.Start();
+    Assert(advertiser.AdvertisedInterfaceCount > 0, "No IPv4 interface bound for Bonjour");
 });
 AsyncTest("Production pairing code rate limit and protected persistence contract", async () =>
 {

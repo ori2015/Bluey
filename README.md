@@ -11,10 +11,11 @@ is included. The documented subscription preview does not support audio input.
 * [Actual test results and outstanding hardware acceptance](TEST_RESULTS.md)
 * [Troubleshooting](TROUBLESHOOTING.md)
 
-Windows cross-build and automated tests have passed. Physical Windows/iPhone E2E
-and real ChatGPT account inference remain unverified; this is not a completed
-hardware-validated release. Running needs no Mac; building/signing the native
-phone app still needs Xcode on macOS or a build runner.
+Windows cross-build, native Windows host installation and automated tests have
+passed. Real ChatGPT plan text, image and function-call inference were validated
+on the installed host. iPhone and complete desktop-control E2E remain unverified;
+this is not a completed hardware-validated release. Running needs no Mac;
+building/signing the native phone app still needs Xcode on macOS or a build runner.
 
 The original Mac app is retained separately and still uses its original API-key
 flow. The following upstream instructions describe that legacy implementation.

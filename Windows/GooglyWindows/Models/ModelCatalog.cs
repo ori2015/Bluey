@@ -26,8 +26,8 @@ public sealed class ModelCatalog(ResponsesClient responses)
         var vision = false; var tools = false;
         try
         {
-            var image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
-            var response = await responses.CompleteAsync(model.Slug, new JsonArray(new JsonObject { ["role"] = "user", ["content"] = new JsonArray(new JsonObject { ["type"] = "input_text", ["text"] = "Describe this tiny image briefly." }, new JsonObject { ["type"] = "input_image", ["image_url"] = image }) }), "Be concise.", [], _ => Task.CompletedTask, ct);
+            var image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAeUlEQVR4nO3PwQkAIBDAsBvYOdzYv0P4CEKhA6Sz9vm64YIGtKABLWhACxrQgga0oAEtaEALGtCCBrSgAS1oQAsa0IIGtKABLWhACxrQgga0oAEtaEALGtCCBrSgAS1oQAsa0IIGtKABLWhACxrQgga0oAEtaEALHruo0HHDllqKYwAAAABJRU5ErkJggg==";
+            var response = await responses.CompleteAsync(model.Slug, new JsonArray(new JsonObject { ["role"] = "user", ["content"] = new JsonArray(new JsonObject { ["type"] = "input_text", ["text"] = "Describe this image briefly." }, new JsonObject { ["type"] = "input_image", ["image_url"] = image }) }), "Be concise.", [], _ => Task.CompletedTask, ct);
             vision = response.Text.Length > 0;
         }
         catch (SubscriptionException ex) when (ex.IsCapability) { }

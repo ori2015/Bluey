@@ -40,6 +40,7 @@ public sealed class CompanionRuntime : IAsyncDisposable
     private readonly ConcurrentDictionary<string, ConversationState> conversations = new();
     private readonly SemaphoreSlim operation = new(1);
     private MdnsAdvertiser? mdns;
+    private System.Security.Cryptography.X509Certificates.X509Certificate2? hostCertificate;
     public CompanionRuntime()
     {
         Auth = new(http, Store); Responses = new(http, Auth); Models = new(Responses); Pairing = new(Store);
@@ -61,10 +62,10 @@ public sealed class CompanionRuntime : IAsyncDisposable
             foreach (var directory in Directory.EnumerateDirectories(Path.GetTempPath(), prefix + "*"))
                 try { Directory.Delete(directory, true); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         await Auth.InitializeAsync(Token); await Pairing.LoadAsync(Token);
-        var certificate = await HostCertificate.LoadAsync(Store, Token); Fingerprint = HostCertificate.Fingerprint(certificate);
+        var certificate = hostCertificate = await HostCertificate.LoadAsync(Store, Token); Fingerprint = HostCertificate.Fingerprint(certificate);
         Phone = new(Pairing, certificate, await Auth.HostIDAsync(Token)); Phone.Changed += Notify; Phone.OnPacket = HandleAsync; Phone.Start();
         mdns = new(Phone.Port, await Auth.HostIDAsync(Token)); mdns.Start();
-        SetStatus("Ready");
+        SetStatus(mdns.AdvertisedInterfaceCount > 0 ? "Ready" : "LAN discovery unavailable. Check your network connection.");
         if (Auth.Account?.Sharing == true)
         {
             try { await LoadModelsAsync(Token); }
@@ -169,6 +170,6 @@ public sealed class CompanionRuntime : IAsyncDisposable
         stopping.Cancel(); CancelRequests();
         if (mdns is not null) await mdns.DisposeAsync();
         if (Phone is not null) await Phone.DisposeAsync();
-        await Task.WhenAll(requests.Values.Select(r => r.Task)); Overlay.Dispose(); http.Dispose(); stopping.Dispose();
+        await Task.WhenAll(requests.Values.Select(r => r.Task)); hostCertificate?.Dispose(); Overlay.Dispose(); http.Dispose(); stopping.Dispose();
     }
 }

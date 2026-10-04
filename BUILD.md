@@ -9,7 +9,8 @@ GitHub Actions job builds an unsigned simulator target, not an installable phone
 ## 1. Install Windows prerequisites
 
 * Windows 11, an ordinary user account, and access to a private Wi-Fi network.
-* [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+* [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) when building
+  from source. The self-contained package includes its runtime and needs no SDK.
 * Git. Visual Studio with .NET desktop development is optional for editing WPF.
 * For local transcription: Visual Studio Build Tools with **Desktop development
   with C++**, CMake, and a multilingual whisper.cpp model. The WPF project itself
@@ -35,8 +36,12 @@ For development, `dotnet run --project Windows/GooglyWindows` launches it direct
 The tray icon opens the panel. Closing the panel keeps it running; Quit in the
 tray exits. Ctrl+Alt+S cancels pending work and disables computer control.
 
-A self-contained x64 publish was produced during development on Linux, but its
-Windows executable was not run here. CI has Windows build and macOS iOS build jobs.
+The self-contained x64 publish was subsequently installed and launched on the
+Windows 11 host through WSL interoperability. The per-user installation is
+`%LOCALAPPDATA%\Programs\GooglyEyes`, with Desktop and Start Menu shortcuts.
+Real ChatGPT text/image/function-call capability checks passed there. The app
+does not start automatically with Windows unless you enable that setting.
+CI has Windows build and macOS iOS build jobs, which have not run remotely.
 
 ## 3. Configure local transcription (required by the current OpenAI preview)
 
@@ -44,7 +49,14 @@ The official ChatGPT plan preview excludes audio input and transcription routes.
 This app intentionally sends **no** audio request to OpenAI. Speech stays local
 until the resulting transcript enters Responses.
 
-Build the tested whisper.cpp release in a **Developer PowerShell for VS**:
+For a prebuilt CPU runtime, the official v1.9.4 release points to
+[build b5130](https://github.com/ggml-org/whisper.cpp/releases/tag/b5130). The host
+installation used `whisper-bin-x64.zip` from that release and verified its SHA-256
+against the release asset digest. Keep the entire extracted `Release` directory,
+including its DLLs. The multilingual base model is configured at
+`%LOCALAPPDATA%\Programs\GooglyEyes\runtime\models\ggml-base.bin`.
+
+Alternatively, build whisper.cpp in a **Developer PowerShell for VS**:
 
 ```powershell
 git clone --branch v1.9.4 --depth 1 https://github.com/ggml-org/whisper.cpp.git Windows/runtime/whisper.cpp

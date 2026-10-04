@@ -63,6 +63,7 @@ public sealed class ResponsesClient(HttpClient http, IAccessTokenProvider auth) 
         using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
         var data = new StringBuilder();
         var text = new StringBuilder();
+        var finishedItems = new SortedDictionary<int, JsonNode>();
         while (await reader.ReadLineAsync(ct) is { } line)
         {
             if (line.Length > 8 * 1024 * 1024 || data.Length > 16 * 1024 * 1024) throw new InvalidDataException("SSE event too large.");
@@ -74,13 +75,24 @@ public sealed class ResponsesClient(HttpClient http, IAccessTokenProvider auth) 
                 var e = JsonNode.Parse(raw) ?? throw new InvalidDataException("Empty SSE event.");
                 switch (e["type"]?.GetValue<string>())
                 {
+                    case "response.output_item.done":
+                        var index = e["output_index"]?.GetValue<int>() ?? throw new InvalidDataException("Missing output item index.");
+                        if (index is < 0 or >= 256) throw new InvalidDataException("Too many response output items.");
+                        finishedItems[index] = e["item"]?.DeepClone() ?? throw new InvalidDataException("Missing finished output item.");
+                        break;
                     case "response.output_text.delta": var part = e["delta"]?.GetValue<string>() ?? ""; text.Append(part); await delta(part); break;
                     case "error": case "response.failed": throw SubscriptionException.Parse(e, null);
                     case "response.incomplete": throw new SubscriptionException("response_incomplete");
                     case "response.completed":
                         var response = e["response"] ?? throw new InvalidDataException("Missing completed response.");
                         if (response["status"]?.GetValue<string>() != "completed") throw new SubscriptionException("response_incomplete");
-                        var output = response["output"]?.AsArray() ?? throw new InvalidDataException("Missing response output.");
+                        // The live plan-sharing route sends finished items in
+                        // output_item.done, with an empty output in completed.
+                        // Keep those items provisional until response.completed.
+                        var output = response["output"]?.AsArray();
+                        if (output is null && finishedItems.Count == 0) throw new InvalidDataException("Missing response output.");
+                        if (output is null || output.Count == 0)
+                            output = new JsonArray(finishedItems.Values.Select(i => i.DeepClone()).ToArray());
                         var finalText = string.Concat(output.Where(i => i?["type"]?.ToString() == "message").SelectMany(i => i?["content"]?.AsArray() ?? []).Where(c => c?["type"]?.ToString() == "output_text").Select(c => c?["text"]?.ToString()));
                         return new((JsonArray)output.DeepClone(), finalText.Length > 0 ? finalText : text.ToString());
                 }

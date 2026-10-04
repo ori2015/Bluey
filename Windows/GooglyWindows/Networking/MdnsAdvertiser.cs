@@ -11,6 +11,7 @@ public sealed class MdnsAdvertiser(int port, string hostID) : IAsyncDisposable
     private readonly CancellationTokenSource stop = new();
     private readonly List<UdpClient> sockets = [];
     private readonly List<Task> workers = [];
+    public int AdvertisedInterfaceCount => sockets.Count;
     private const string Service = "_googly._tcp.local";
     private readonly string instance = "Googly-" + Environment.MachineName.Replace('.', '-') + "-" + hostID[^8..] + "." + Service;
     private readonly string host = "googly-" + hostID[^12..].Replace('-', '0') + ".local";

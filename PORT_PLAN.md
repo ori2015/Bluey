@@ -173,3 +173,21 @@ unit/integration tests include actual host OAuth/TLS source and a real local
 Whisper audio run. They do not establish the full Definition of Done: see
 TEST_RESULTS.md for the physical/account checks still outstanding. CI workflow
 files were added but remote CI has not been invoked from this environment.
+
+## Native Windows installation follow-up
+
+On the user's installation request, WSL interoperability provided access to the
+Windows 11 host. The companion was installed for the current user, launched and
+verified through its actual UI Automation tree. Local multilingual Whisper was
+installed from the official b5130 x64 CPU asset and configured. With explicit
+user confirmation, the Ethernet profile was changed to Private and executable
+firewall rules were added for private local-subnet TCP and UDP 5353.
+
+Native tests exposed a Schannel failure with EphemeralKeySet; the host now uses
+UserKeySet on Windows and disposes its certificate on shutdown. Real account
+inference exposed an invalid PNG probe and empty completed-response output
+envelopes. The probe is now a valid 64×64 PNG and the SSE reader retains finished
+output items until completion. Text, vision, function call and tool-result
+continuation then validated against a model selected from live discovery.
+The installed app now reports ChatGPT plan usage validated. The full phone and
+computer-control acceptance checklist remains open.
