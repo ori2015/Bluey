@@ -20,3 +20,9 @@ TestResults/
 Windows/runtime/
 
 artifacts/
+
+# iOS cloud builder local artifacts
+dist/
+*.ipa
+*.age
+builder.json
