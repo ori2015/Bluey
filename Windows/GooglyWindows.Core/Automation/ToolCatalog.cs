@@ -27,7 +27,7 @@ public static class ToolCatalog
         Add("open_url", "Open http/https URL in the default browser.", new() { ["url"] = String() }, "url");
         Add("get_active_window", "Read the active window title and process.");
         Add("go_to_sleep", "Return Bluey to idle after a short goodbye.");
-        var result = new JsonArray(new JsonObject { ["type"] = "namespace", ["name"] = "computer", ["description"] = "Bluey's local Windows tools", ["tools"] = functions });
+        var result = new JsonArray(new JsonObject { ["type"] = "namespace", ["name"] = "bluey_pc", ["description"] = "Bluey's local Windows tools", ["tools"] = functions });
         if (webSearch) result.Add(new JsonObject { ["type"] = "web_search" });
         return result;
     }

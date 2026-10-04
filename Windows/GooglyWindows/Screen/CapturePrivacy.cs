@@ -14,6 +14,6 @@ internal static class CapturePrivacy
     }
     internal static void RequireExcludedWindows()
     {
-        if (Volatile.Read(ref unsafeWindow) != 0) throw new InvalidOperationException("Windows couldn't exclude Bluey's own windows from capture. Restart on a supported Windows 11 desktop before using screen observation.");
+        if (Volatile.Read(ref unsafeWindow) != 0) throw new InvalidOperationException("Windows couldn't exclude Bluey's cursor overlays from capture. Restart on a supported Windows 11 desktop before using screen observation.");
     }
 }

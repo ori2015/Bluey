@@ -367,7 +367,7 @@ sealed class FakeResponses : IResponsesClient
     public async Task<CompletedResponse> CompleteAsync(string model, JsonArray input, string instructions, JsonArray tools, Func<string, Task> delta, CancellationToken ct)
     {
         Calls++;
-        if (Calls == 1) return new(new JsonArray(new JsonObject { ["type"] = "function_call", ["namespace"] = "computer", ["name"] = "look_at_screen", ["call_id"] = "c1", ["arguments"] = "{}" }), "");
+        if (Calls == 1) return new(new JsonArray(new JsonObject { ["type"] = "function_call", ["namespace"] = "bluey_pc", ["name"] = "look_at_screen", ["call_id"] = "c1", ["arguments"] = "{}" }), "");
         if (!input.Any(n => n?["type"]?.ToString() == "function_call_output") || !input.Any(n => n?["content"] is JsonArray)) throw new Exception("Missing tool/image context");
         await delta("Settings."); return new(new JsonArray(), "Settings.");
     }

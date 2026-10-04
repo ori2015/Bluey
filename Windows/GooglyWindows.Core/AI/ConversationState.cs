@@ -11,6 +11,8 @@ public sealed class ConversationState
     }
     public void Commit(string user, string assistant) { turns.Enqueue((user, assistant)); while (turns.Count > 8) turns.Dequeue(); }
     public void Clear() => turns.Clear();
+    /// <summary>Current request plus the previous user turn, so a short reply ("yes") keeps the original action request.</summary>
+    public string IntentContext(string user) => turns.Count > 0 ? turns.Last().User + " / " + user : user;
     public static JsonObject Message(string role, string text) => new() { ["role"] = role, ["content"] = text };
     public static void AppendOutput(JsonArray input, JsonArray output) { foreach (var item in output) input.Add(item?.DeepClone()); }
     public static void AppendToolResult(JsonArray input, string callID, ToolResult result)
@@ -26,7 +28,7 @@ public sealed class AgentLoop(IResponsesClient responses, IToolExecutor executor
     public const int MaxRounds = 12;
     public const string Instructions = """
     You are Bluey, a small blueberry with big googly eyes, living on an iPhone under the user's Windows screen, with your own cursor.
-    Be dry, quick-witted and a little cheeky. Respond in the user's language, including Hebrew. Keep captions short, normally under fifteen words.
+    Be dry, quick-witted and a little cheeky. The user always speaks Hebrew. Always understand their messages as Hebrew (transcripts may contain recognition errors; never reinterpret them as another language) and always reply in Hebrew, writing app and website names as they are. Keep captions short, normally under fifteen words.
     The microphone records only while the user holds your face. You operate Windows, never macOS. Use ctrl instead of cmd shortcuts.
     Call tools before describing their result. Never invent screen contents: see it only after look_at_screen. Prefer C/L/W target IDs from the latest observation.
     This/that/here usually means the user's mouse location. Point at the specific thing when explaining it.
@@ -58,15 +60,15 @@ public sealed class AgentLoop(IResponsesClient responses, IToolExecutor executor
             {
                 var name = call?["name"]?.ToString() ?? throw new InvalidDataException("Missing tool name.");
                 var ns = call?["namespace"]?.ToString();
-                if (ns is not null && ns != "computer") throw new InvalidDataException("Unknown tool namespace.");
-                if (name.StartsWith("computer.", StringComparison.Ordinal)) name = name[9..];
+                if (ns is not null && ns != "bluey_pc") throw new InvalidDataException("Unknown tool namespace.");
+                if (name.StartsWith("bluey_pc.", StringComparison.Ordinal)) name = name[9..];
                 var id = call?["call_id"]?.ToString() ?? throw new InvalidDataException("Missing call ID.");
                 var args = call?["arguments"]?.ToString() ?? "{}";
                 await toolEvent(name, id, true);
                 ToolResult result;
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 timeout.CancelAfter(TimeSpan.FromSeconds(60)); // Includes user confirmation; fails closed.
-                try { result = await executor.ExecuteAsync(name, args, user, timeout.Token); }
+                try { result = await executor.ExecuteAsync(name, args, conversation.IntentContext(user), timeout.Token); }
                 catch (OperationCanceledException) when (!ct.IsCancellationRequested) { result = new("Tool timed out; no further action authorized."); }
                 catch (ArgumentException) { result = new("Invalid tool arguments. Correct them before retrying."); }
                 await toolEvent(name, id, false);

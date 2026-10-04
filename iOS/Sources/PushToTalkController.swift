@@ -82,6 +82,11 @@ final class PushToTalkController: NSObject, ObservableObject, AVAudioRecorderDel
         if state == .asleep { wake() }
         else if state == .listening || state == .speaking { startRecording() }
     }
+    /// The desktop is recording from its own keyboard shortcut: mirror the hold UI without recording here.
+    func remoteListening(_ on: Bool) {
+        if on, state == .listening { setState(.asking) }
+        else if !on, state == .asking, recorder == nil { setState(.listening) }
+    }
     private func startRecording() {
         guard holding, recorder == nil else { return }
         player.stop(); level = 0 // No chirp contaminates microphone input.

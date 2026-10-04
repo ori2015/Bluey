@@ -18,7 +18,7 @@ public sealed class WhisperTranscriber
             var file = Path.Combine(dir, "input.wav"); await File.WriteAllBytesAsync(file, pcm, ct);
             var output = Path.Combine(dir, "transcript");
             var start = new ProcessStartInfo(Executable) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-            foreach (var arg in new[] { "-m", Model, "-f", file, "-l", "auto", "-nt", "-oj", "-of", output }) start.ArgumentList.Add(arg);
+            foreach (var arg in new[] { "-m", Model, "-f", file, "-l", "he", "--prompt", "פתח את WhatsApp, Chrome, Googly Eyes, Spotify, Outlook, Word, Excel. תלחץ, תגלול, תחפש.", "-nt", "-oj", "-of", output }) start.ArgumentList.Add(arg);
             using var process = Process.Start(start) ?? throw new InvalidOperationException("Local Whisper couldn't start.");
             using var cancel = ct.Register(() => { try { process.Kill(true); } catch (InvalidOperationException) { } });
             var stdout = process.StandardOutput.ReadToEndAsync(ct); var stderr = process.StandardError.ReadToEndAsync(ct);

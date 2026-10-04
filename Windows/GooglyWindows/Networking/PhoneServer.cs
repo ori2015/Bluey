@@ -8,11 +8,11 @@ using GooglyWindows.Core.Protocol;
 using GooglyWindows.Core.Auth;
 using GooglyWindows.Logging;
 namespace GooglyWindows.Networking;
-public sealed class PhonePeer(PacketStream wire, string deviceID, string name)
+public sealed class PhonePeer(PacketStream? wire, string deviceID, string name)
 {
     public string DeviceID { get; } = deviceID;
     public string Name { get; } = name;
-    public Task SendAsync(Packet packet, CancellationToken ct) => wire.SendAsync(packet, ct);
+    public Task SendAsync(Packet packet, CancellationToken ct) => wire?.SendAsync(packet, ct) ?? Task.CompletedTask; // null wire: the on-PC keyboard session
     public DateTimeOffset LastSeen { get; set; } = DateTimeOffset.UtcNow;
 }
 public sealed class PhoneServer(PairingRegistry pairing, X509Certificate2 certificate, string hostID) : IAsyncDisposable

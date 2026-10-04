@@ -103,8 +103,9 @@ snapshot IDs. UIA traversal has a budget and a single bounded worker if a native
 provider stalls. OCR tries English/Hebrew engines and optionally local Tesseract.
 Password controls are excluded from text and their known rectangles masked.
 
-All own top-level overlay/panel windows request WDA_EXCLUDEFROMCAPTURE;
-observation fails closed if Windows rejects exclusion for any of them. Per-monitor
+Cursor overlay windows request WDA_EXCLUDEFROMCAPTURE; the main/settings panel
+remains visible in screenshots for support and troubleshooting. Observation
+fails closed if Windows rejects exclusion for any overlay. Per-monitor
 WPF windows are transparent, click-through, topmost, no-activate and DPI aware.
 Native capture exclusion, actual coordinates and elevated-app behavior still need
 physical Windows validation. DRM/secure desktops may not be capturable.

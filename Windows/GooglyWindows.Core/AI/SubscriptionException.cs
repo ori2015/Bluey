@@ -1,18 +1,24 @@
 using System.Net;
 using System.Text.Json.Nodes;
 namespace GooglyWindows.Core.AI;
-public sealed class SubscriptionException(string code, HttpStatusCode? status = null, string? parameter = null, string? requestID = null) : Exception(MessageFor(code))
+public sealed class SubscriptionException(string code, HttpStatusCode? status = null, string? parameter = null, string? requestID = null, string? detail = null) : Exception(MessageFor(code))
 {
     public string Code { get; } = code;
     public HttpStatusCode? Status { get; } = status;
     public string? Parameter { get; } = parameter;
     public string? RequestID { get; } = requestID;
+    /// <summary>Server-provided explanation (no credentials); shown only for unrecognized failures.</summary>
+    public string? Detail { get; } = detail;
     public bool IsCapability => Code is "subscription_sharing_unsupported_capability" or "subscription_sharing_route_not_supported" or "model_not_found" or "permission_denied";
     public bool IsTransient => Code is "subscription_sharing_usage_unavailable" or "subscription_sharing_user_unavailable" || (int?)Status >= 500;
     public static SubscriptionException Parse(JsonNode? body, HttpStatusCode? status, string? requestID = null)
     {
         var error = body?["error"] ?? body?["response"]?["error"] ?? body;
-        return new(error?["code"]?.GetValue<string>() ?? (status == HttpStatusCode.Unauthorized ? "sign_in_required" : "request_failed"), status, error?["param"]?.ToString(), requestID);
+        var code = error?["code"]?.ToString();
+        var message = error?["message"]?.ToString() ?? error?["detail"]?.ToString() ?? (body?["detail"] is JsonValue ? body["detail"]!.ToString() : null);
+        var detail = (status is { } s ? (int)s + " " : "") + (error?["type"]?.ToString() is { } type ? type + ": " : "") + message;
+        if (detail.Length > 300) detail = detail[..300];
+        return new(string.IsNullOrEmpty(code) ? (status == HttpStatusCode.Unauthorized ? "sign_in_required" : "request_failed") : code, status, error?["param"]?.ToString(), requestID, detail.Trim().Length == 0 ? null : detail);
     }
     public static string MessageFor(string code) => code switch
     {

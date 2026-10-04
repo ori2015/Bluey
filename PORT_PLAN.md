@@ -132,8 +132,9 @@ certificate and a fresh HMAC challenge. Bonjour names convey no trust.
 * Heuristic risk classification is conservative but cannot understand every UI;
   guard commits/destructive shortcuts, refuse secure fields, surface the exact
   pending action for human approval and include an emergency stop.
-* Exclude every own UI window with WDA_EXCLUDEFROMCAPTURE and require hardware
-  screenshot inspection. DRM/secure desktop surfaces may remain unavailable.
+* Exclude cursor overlays with WDA_EXCLUDEFROMCAPTURE and require hardware
+  screenshot inspection. Keep the main/settings panel available in screenshots
+  for troubleshooting. DRM/secure desktop surfaces may remain unavailable.
 
 ## Work sequence
 
@@ -166,7 +167,7 @@ IPv4 interfaces. Local Whisper/Tesseract runtimes and models are selected by the
 user; they are not downloaded automatically. The current UI exposes one ChatGPT
 registration at a time. Overlay visuals preserve the palette/eyes/curved flights
 and captions, but aren't a pixel-for-pixel port of all 1,100 lines of Mac effects.
-Capture fails closed if any own window cannot request capture exclusion.
+Capture fails closed if any cursor overlay cannot request capture exclusion.
 
 A Release cross-build and self-contained win-x64 publish succeeded. Portable
 unit/integration tests include actual host OAuth/TLS source and a real local

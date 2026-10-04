@@ -21,21 +21,26 @@ public sealed class MainWindow : Window
         this.runtime = runtime; Title = "Googly Eyes"; Width = 470; Height = 650; MinWidth = 420; MinHeight = 550;
         Background = new SolidColorBrush(Color.FromRgb(30, 27, 41)); WindowStartupLocation = WindowStartupLocation.CenterScreen;
         var root = new StackPanel { Margin = new Thickness(26) };
-        root.Children.Add(new TextBlock { Text = "🫐  Googly Eyes", FontSize = 30, FontWeight = FontWeights.Bold });
-        foreach (var row in new[] { phone, account, model, transcription, control, status }) root.Children.Add(row);
+        root.Children.Add(new TextBlock { Text = "🫐  Googly Eyes", FontSize = 30, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 14) });
+        var card = new StackPanel();
+        foreach (var row in new[] { phone, account, model, transcription, control }) { row.Margin = new Thickness(0, 5, 0, 5); card.Children.Add(row); }
+        root.Children.Add(new Border { Background = new SolidColorBrush(Color.FromRgb(42, 38, 64)), CornerRadius = new CornerRadius(14), Padding = new Thickness(18, 10, 18, 10), Margin = new Thickness(0, 0, 0, 12), Child = card });
+        status.Foreground = new SolidColorBrush(Color.FromRgb(255, 180, 171)); status.Margin = new Thickness(2, 0, 2, 12);
+        root.Children.Add(status);
         root.Children.Add(Button("Settings", () => { ShowSettings(); return Task.CompletedTask; }));
         root.Children.Add(Button("Reconnect iPhone", () => { runtime.Phone?.ReconnectAll(); return Task.CompletedTask; }));
-        root.Children.Add(Button("Disconnect ChatGPT", SignOutAsync));
-        root.Children.Add(new TextBlock { Text = "Ctrl + Alt + S stops computer control", FontSize = 12, Foreground = Brushes.LightGray });
+        root.Children.Add(Button("Disconnect ChatGPT", SignOutAsync, true));
+        root.Children.Add(new TextBlock { Text = "Hold Ctrl + Alt + Space to talk to Bluey  ·  Ctrl + Alt + S stops computer control", FontSize = 12, Foreground = Brushes.LightGray });
         root.Children.Add(settings); Content = new ScrollViewer { Content = root, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         Closing += (_, e) => { e.Cancel = true; Hide(); };
         SourceInitialized += (_, _) =>
         {
             var handle = new WindowInteropHelper(this).Handle;
-            Screen.CapturePrivacy.Exclude(handle);
+            // Keep the settings panel visible in screenshots for support and troubleshooting.
             var source = HwndSource.FromHwnd(handle);
-            source?.AddHook((nint hwnd, int msg, nint w, nint l, ref bool handled) => { if (msg == 0x0312) { runtime.StopActions(); Refresh(); handled = true; } return 0; });
+            source?.AddHook((nint hwnd, int msg, nint w, nint l, ref bool handled) => { if (msg == 0x0312) { if (w == 2) runtime.BeginKeyboardVoice(); else { runtime.StopActions(); Refresh(); } handled = true; } return 0; });
             if (!Native.RegisterHotKey(handle, 1, 0x4003, 'S')) status.Text = "Emergency shortcut unavailable; use Stop in the tray menu.";
+            if (!Native.RegisterHotKey(handle, 2, 0x4003, 0x20)) status.Text = "Voice shortcut Ctrl + Alt + Space is used by another app.";
         };
         runtime.Changed += Refresh; Refresh();
     }
@@ -47,9 +52,10 @@ public sealed class MainWindow : Window
         transcription.Text = "Transcription: Local Whisper" + (runtime.Whisper.Ready ? " ✓" : " — setup required");
         control.Text = "Computer control: " + (runtime.Settings.ComputerControl ? "Enabled" : "Disabled"); status.Text = runtime.Status;
     }
-    private Button Button(string title, Func<Task> action)
+    private Button Button(string title, Func<Task> action, bool secondary = false)
     {
-        var button = new Button { Content = title, HorizontalContentAlignment = HorizontalAlignment.Left };
+        var button = new Button { Content = title, HorizontalContentAlignment = HorizontalAlignment.Center };
+        if (secondary) button.Background = new SolidColorBrush(Color.FromRgb(68, 63, 102));
         button.Click += async (_, _) =>
         {
             button.IsEnabled = false;
@@ -76,14 +82,18 @@ public sealed class MainWindow : Window
         chat.Children.Add(new TextBlock { Text = runtime.Auth.Account?.Sharing == true ? "Connected\nChatGPT plan usage enabled" : "Sign in and grant ChatGPT plan usage." });
         chat.Children.Add(Button(runtime.Auth.Account?.Sharing == true ? "Reconnect" : "Continue with ChatGPT", async () => { runtime.CancelRequests(); await runtime.Auth.SignInAsync(runtime.Token); runtime.Responses.ResumeUsage(); await runtime.LoadModelsAsync(runtime.Token); ShowSettings(); }));
         chat.Children.Add(Button("Manage usage", () => { ApplicationCatalog.OpenURL("https://chatgpt.com/settings/usage"); return Task.CompletedTask; }));
-        chat.Children.Add(Button("Sign out", async () => { await SignOutAsync(); ShowSettings(); }));
+        chat.Children.Add(Button("Sign out", async () => { await SignOutAsync(); ShowSettings(); }, true));
         chat.Children.Add(Button("Resume plan requests", () => { runtime.Responses.ResumeUsage(); return Task.CompletedTask; }));
         chat.Children.Add(new TextBlock { Text = "Active model (completed inference required)" });
         var choices = new ComboBox { ItemsSource = runtime.Models.Models, SelectedItem = runtime.Models.Active, Margin = new Thickness(0, 5, 0, 8) }; chat.Children.Add(choices);
-        chat.Children.Add(Button("Validate selected model", async () =>
+        async Task ChooseAsync()
         {
-            if (choices.SelectedItem is Models.ModelChoice selected) { await runtime.Models.ValidateAsync(selected, runtime.Token); runtime.Settings.PreferredModel = selected.Slug; runtime.Settings.Save(); ShowSettings(); }
-        }));
+            if (choices.SelectedItem is not Models.ModelChoice selected) return;
+            await runtime.Models.ValidateAsync(selected, runtime.Token); runtime.Settings.PreferredModel = selected.Slug; runtime.Settings.Save(); runtime.Report(new InvalidOperationException("Model " + selected.DisplayName + " saved for next time.")); ShowSettings();
+        }
+        // Picking a model validates it and remembers it for the next launch.
+        choices.SelectionChanged += async (_, e) => { if (e.AddedItems.Count == 0 || !choices.IsDropDownOpen && !choices.IsKeyboardFocusWithin) return; try { await ChooseAsync(); } catch (Exception ex) { runtime.Report(ex); Refresh(); } };
+        chat.Children.Add(Button("Validate selected model", ChooseAsync));
         chat.Children.Add(Button("Test web research", async () => { await runtime.Models.ProbeWebAsync(runtime.Token); ShowSettings(); }));
         chat.Children.Add(new TextBlock { Text = runtime.Models.WebStatus, TextWrapping = TextWrapping.Wrap });
         chat.Children.Add(new TextBlock { Text = "AI: " + (runtime.Models.Active is null ? "Not validated" : "ChatGPT Plan ✓") + "\nTranscription: Local fallback (subscription audio unsupported)", TextWrapping = TextWrapping.Wrap });
@@ -97,7 +107,7 @@ public sealed class MainWindow : Window
         pairing.Children.Add(Button("Forget paired devices", async () => { await runtime.Pairing.ForgetAllAsync(runtime.Token); runtime.Phone?.ReconnectAll(); }));
         var audio = Tab("Local AI");
         audio.Children.Add(new TextBlock { Text = "Transcription source: Local Whisper", FontSize = 18 });
-        audio.Children.Add(new TextBlock { Text = "Select a whisper.cpp CPU or GPU executable and a multilingual ggml model (without .en). Hebrew and English are detected locally.", TextWrapping = TextWrapping.Wrap });
+        audio.Children.Add(new TextBlock { Text = "Select a whisper.cpp CPU or GPU executable and a multilingual ggml model (without .en). Speech is always transcribed as Hebrew.", TextWrapping = TextWrapping.Wrap });
         var exe = new TextBox { Text = runtime.Settings.WhisperExecutable }; audio.Children.Add(exe);
         audio.Children.Add(Button("Choose whisper-cli.exe", () => PickAsync(exe, "Whisper executable|*.exe")));
         var whisperModel = new TextBox { Text = runtime.Settings.WhisperModel }; audio.Children.Add(whisperModel);

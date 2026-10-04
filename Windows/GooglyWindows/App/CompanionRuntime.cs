@@ -51,6 +51,48 @@ public sealed class CompanionRuntime : IAsyncDisposable
         Overlay.FaceChanged += face => { if (Phone is { } server) { server.LastFace = face; _ = BroadcastFaceAsync(server, face); } };
     }
     public CancellationToken Token => stopping.Token;
+    private readonly Audio.MicRecorder mic = new();
+    private readonly PhonePeer localPeer = new(null, "local-pc", "This PC");
+    private int localCalls;
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
+    /// <summary>Ctrl+Alt+Space held: records the PC microphone; releasing Space sends it as a voice request.</summary>
+    public void BeginKeyboardVoice()
+    {
+        if (mic.Recording) return;
+        try
+        {
+            mic.LimitReached -= OnMicLimit; mic.LimitReached += OnMicLimit; mic.Start();
+            SetStatus("Listening… release Space to send.");
+            _ = UIAsync(() => { Overlay.SetMood("listening"); Overlay.Caption("🎙 מקשיב…", false); });
+            _ = BroadcastCommandAsync("listen_start");
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(150); // let the shortcut's own key-down settle
+                while (mic.Recording && (GetAsyncKeyState(0x20) & 0x8000) != 0) await Task.Delay(30);
+                if (mic.Recording) await System.Windows.Application.Current.Dispatcher.InvokeAsync(EndKeyboardVoice);
+            });
+        }
+        catch (Exception e) { Report(e); }
+    }
+    private void EndKeyboardVoice()
+    {
+        if (!mic.Recording) return;
+        _ = BroadcastCommandAsync("listen_stop");
+        try
+        {
+            var wav = mic.Stop();
+            if (wav.Length < 9600) { SetStatus("Ready"); _ = UIAsync(() => Overlay.Caption("", true)); return; } // under ~0.2 s: an accidental tap
+            SetStatus("Processing…");
+            _ = HandleAsync(localPeer, new Packet { Command = "voice_request", CallID = "pc-" + Interlocked.Increment(ref localCalls), Audio = Convert.ToBase64String(wav) }, Token);
+        }
+        catch (Exception e) { Report(e); }
+    }
+    private async Task BroadcastCommandAsync(string command)
+    {
+        try { if (Phone is { } server) await server.BroadcastAsync(new Packet { Command = command }, Token); }
+        catch (Exception e) when (e is OperationCanceledException or IOException or ObjectDisposedException) { }
+    }
+    private void OnMicLimit() => System.Windows.Application.Current.Dispatcher.BeginInvoke(() => { EndKeyboardVoice(); });
     private async Task BroadcastFaceAsync(PhoneServer server, FaceState face)
     {
         try { await server.BroadcastAsync(new Packet { Face = face, Command = "face" }, Token); }
@@ -160,8 +202,8 @@ public sealed class CompanionRuntime : IAsyncDisposable
     private static void CancelSafely(CancellationTokenSource source) { try { source.Cancel(); } catch (ObjectDisposedException) { } }
     public void StopActions() { Settings.ComputerControl = false; foreach (var r in requests.Values) CancelSafely(r.Cancel); SetStatus("Stopped. Computer control is disabled."); }
     public void CancelRequests() { foreach (var r in requests.Values) CancelSafely(r.Cancel); }
-    public void Report(Exception error) { SetStatus(ErrorText(error)); SafeLog.Event("Warning", "runtime", error is SubscriptionException sub ? sub.Code : error.GetType().Name); }
-    private static string ErrorText(Exception e) => e switch { SubscriptionException => e.Message, InvalidOperationException => e.Message, ArgumentException => "Invalid request or recording.", OperationCanceledException => "Request cancelled or timed out.", _ => "Couldn't complete the request. Check Settings and the connection." };
+    public void Report(Exception error) { SetStatus(ErrorText(error)); SafeLog.Event("Warning", "runtime", error is SubscriptionException sub ? sub.Code + (sub.Detail is null ? "" : " | " + sub.Detail) : error.GetType().Name + " | " + error.Message); }
+    private static string ErrorText(Exception e) => e switch { SubscriptionException { Code: "request_failed", Detail: { Length: > 0 } d } => "ChatGPT couldn't complete this request (" + SafeLog.Redact(d) + ")", SubscriptionException => e.Message, InvalidOperationException => e.Message, ArgumentException => "Invalid request or recording.", OperationCanceledException => "Request cancelled or timed out.", _ => "Couldn't complete the request. Check Settings and the connection." };
     private void SetStatus(string status) { Status = status; Notify(); }
     private void Notify() => System.Windows.Application.Current.Dispatcher.BeginInvoke(() => Changed?.Invoke());
     private static async Task UIAsync(Action action) => await System.Windows.Application.Current.Dispatcher.InvokeAsync(action);

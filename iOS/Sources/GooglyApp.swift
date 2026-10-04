@@ -150,6 +150,9 @@ struct RootView: View {
             switch command {
             case "wake": live.wake()
             case "sleep": live.sleep()
+            // The Windows keyboard shortcut is recording: show the same "all ears" state as a finger hold.
+            case "listen_start": DispatchQueue.main.async { live.remoteListening(true) }
+            case "listen_stop": DispatchQueue.main.async { live.remoteListening(false) }
             default: break
             }
         }
