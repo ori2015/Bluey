@@ -1,3 +1,26 @@
+# Googly Eyes: iPhone + Windows
+
+This branch ports Bluey to a .NET 10 WPF Windows companion, preserving the original
+SwiftUI character. AI runs through official Sign in with ChatGPT and the public
+Responses API, with local whisper.cpp transcription. No API-key billing fallback
+is included. The documented subscription preview does not support audio input.
+
+* [Build, install, sign in and pair](BUILD.md)
+* [Architecture](ARCHITECTURE.md)
+* [Audit and port plan](PORT_PLAN.md)
+* [Actual test results and outstanding hardware acceptance](TEST_RESULTS.md)
+* [Troubleshooting](TROUBLESHOOTING.md)
+
+Windows cross-build and automated tests have passed. Physical Windows/iPhone E2E
+and real ChatGPT account inference remain unverified; this is not a completed
+hardware-validated release. Running needs no Mac; building/signing the native
+phone app still needs Xcode on macOS or a build runner.
+
+The original Mac app is retained separately and still uses its original API-key
+flow. The following upstream instructions describe that legacy implementation.
+
+---
+
 # Googly Eyes
 
 A blueberry character who lives on an iPhone under your Mac's screen and points at things with his own big cursor.

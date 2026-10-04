@@ -1,6 +1,6 @@
 # Bluey: iPhone + Windows port
 
-Status: implementation in progress; hardware acceptance is required before release.
+Status: port implementation and automated checks delivered; physical Windows/iPhone and real-account acceptance remain outstanding.
 Audit baseline: `rbrown101010/bluey-by-riley`, commit `5aab7ff`.
 Documentation checked: 2026-10-04.
 
@@ -150,3 +150,26 @@ certificate and a fresh HMAC challenge. Bonjour names convey no trust.
 11. Compile, automated unit/integration checks, security review and fixes.
 12. BUILD, ARCHITECTURE, TEST_RESULTS, TROUBLESHOOTING; list every hardware
     acceptance case with its actual status. Commit logical changes locally.
+
+## Implementation outcome
+
+The modular .NET 10 WPF solution, protected OAuth, real TLS server/pairing,
+IPv4 mDNS, Responses SSE/function loop, model probes, local Whisper adapter,
+Windows.Graphics.Capture, UIA/OCR, computer tools, risk confirmation, overlays,
+tray/settings, history, startup and iPhone PTT wiring are implemented. Original
+FaceView.swift, BlobShape.swift, Palette.swift and Mac sources are unchanged.
+
+Deliberate scope details: internal MacLink/LiveVoice view names remain compatible;
+the recorder is PushToTalkController.swift. Initial pairing uses code plus full
+fingerprint comparison, rather than a QR camera flow. Discovery currently covers
+IPv4 interfaces. Local Whisper/Tesseract runtimes and models are selected by the
+user; they are not downloaded automatically. The current UI exposes one ChatGPT
+registration at a time. Overlay visuals preserve the palette/eyes/curved flights
+and captions, but aren't a pixel-for-pixel port of all 1,100 lines of Mac effects.
+Capture fails closed if any own window cannot request capture exclusion.
+
+A Release cross-build and self-contained win-x64 publish succeeded. Portable
+unit/integration tests include actual host OAuth/TLS source and a real local
+Whisper audio run. They do not establish the full Definition of Done: see
+TEST_RESULTS.md for the physical/account checks still outstanding. CI workflow
+files were added but remote CI has not been invoked from this environment.
