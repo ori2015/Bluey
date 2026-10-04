@@ -1,0 +1,5 @@
+{"hello":"Ori iPhone","protocolVersion":2,"deviceID":"D76CE1CA-8177-4A24-9848-99E9D246B8A2"}
+{"command":"voice_request","callID":"iphone-call-1","audio":"UklGRg=="}
+{"face":{"gazeX":-0.25,"gazeY":-0.75,"mood":"pointing","talk":0.0}}
+{"command":"assistant_delta","callID":"iphone-call-1","text":"פתחתי את Chrome"}
+{"command":"assistant_done","callID":"iphone-call-1","text":"פתחתי את Chrome"}

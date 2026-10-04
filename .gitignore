@@ -8,3 +8,15 @@ xcuserdata/
 Secrets.xcconfig
 *.env
 .env*
+# Windows build outputs and protected local data
+**/bin/
+**/obj/
+.vs/
+TestResults/
+*.user
+*.dpapi
+*.pfx
+*.wav
+Windows/runtime/
+
+artifacts/
